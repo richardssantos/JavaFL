@@ -1,0 +1,1 @@
+somasubtrai x y = ((x + y) + (x - y)); main = (somasubtrai 7 2)

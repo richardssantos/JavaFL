@@ -1,0 +1,8 @@
+nul = cons (1,0);
+Cons x y = (cons (2,2) x y);
+lista = (Cons 1 (Cons 2 (Cons 3 (Cons 4 (nul)))));
+reduce f acc l = case l of
+{<1> <> -> acc}
+{<2> <z zs> -> (f z (reduce f acc zs))};
+soma a b = (a + b);
+main = (reduce soma 0 (lista))

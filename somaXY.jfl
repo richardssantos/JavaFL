@@ -1,0 +1,2 @@
+Soma x y = (x + y);
+main = (Soma (Soma 3 5) (Soma 7 9))

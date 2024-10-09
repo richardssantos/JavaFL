@@ -1,0 +1,1 @@
+teste x y = (x-y); teste2 x y = (x + y); main = (teste2 5 3)

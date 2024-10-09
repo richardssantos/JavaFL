@@ -1,0 +1,480 @@
+PARSER_BEGIN(Jfl)
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Deque;
+
+
+
+class JflTree {
+  ArrayList <Fun> functions;
+  Main main;
+
+  JflTree(ArrayList <Fun> functions, Main main){
+    this.functions = functions;
+    this.main = main;
+  }
+}
+
+class Main{
+  ArrayList<Exp> expressions;
+  Main(ArrayList expressions){
+    this.expressions = expressions;
+  }
+}
+
+class Fun{
+  String name;
+  ArrayList <String> identifiers;
+  ArrayList<Exp> expressions;
+  int nargs;
+  Fun(String name, ArrayList <String> identifiers, ArrayList<Exp> expressions){
+    this.name = name;
+    this.identifiers = identifiers;
+    this.expressions = expressions;
+    this.nargs = this.identifiers.size();
+  }
+}
+
+class Exp {}
+
+class Let extends Exp {
+  String id;
+  Exp exp1, exp2;
+  Let(String id, Exp exp1, Exp exp2){
+    this.id = id;
+    this.exp1 = exp1;
+    this.exp2 = exp2;
+  }
+}
+
+class If extends Exp {
+  Exp exp1, exp2, exp3;
+  If(Exp exp1, Exp exp2, Exp exp3){
+    this.exp1 = exp1;
+    this.exp2 = exp2;
+    this.exp3 = exp3;
+  }
+}
+
+class Num extends Exp{
+  int num;
+  Num(int num){
+    this.num = num;
+  }
+}
+
+class Id extends Exp{
+  String id;
+  Id(String id){
+    this.id = id;
+  }
+}
+
+class ExpressionOperator extends Exp{
+    Exp exp1, exp2;
+    Operation op;
+    ExpressionOperator(Exp exp1,Operation op, Exp exp2){
+      this.exp1 = exp1;
+      this.op = op;
+      this.exp2 = exp2;
+    }
+}
+
+class ExpressionSequence extends Exp {
+    Exp id;
+    ArrayList<Exp> listaExp;
+    ExpressionSequence(Exp id, ArrayList<Exp> listaExp){
+      this.id = id;
+      this.listaExp = listaExp;
+    }
+}
+
+class Operation{
+  String op;
+  Operation(String op){
+    this.op = op;
+  }
+}
+
+class Cons extends Exp{
+    int tag;
+    int arity;
+    Cons(int tag,int arity){
+        this.tag = tag;
+        this.arity = arity;
+    }
+}
+
+class Case extends Exp {
+    Exp expression;
+    ArrayList <Exp> cases;
+    ArrayList<Exp> expressions;
+    ArrayList <ArrayList<Exp>> caseExpressionList;
+    Case(Exp expression, ArrayList <Exp> cases, ArrayList<Exp> expressions,ArrayList <ArrayList<Exp>> caseExpressionList){
+        this.expression = expression;
+        this.cases = cases;
+        this.expressions = expressions;
+        this.caseExpressionList = caseExpressionList;
+    }
+}
+
+
+
+public class Jfl {
+  private static HashMap<String, Fun> funcs = new HashMap();
+  public static void main(String args[]) throws ParseException,IOException {
+    Jfl parser = new Jfl(new FileInputStream(args[0]));
+    JflTree arvore = parser.Jfl();
+    geraCodigo(arvore,funcs);
+  }
+
+  public static void imprimeCodigo(String text, BufferedWriter writer) {
+    try{
+        writer.write(text);
+     } catch(IOException e) {
+        System.out.println(e.getMessage());
+     }
+  }
+
+    public static void imprimeIds(HashMap<String, Integer> ids) {
+        for (String key : ids.keySet()) {
+            System.out.println("Id: " +key + " = " + ids.get(key));
+        }
+    }
+
+
+  public static void geraCodigo(JflTree program,HashMap<String, Fun> funcs) {
+    Main main  = program.main;
+//    HashMap<String, Fun> funcs = new HashMap();
+    String dirName = "SECD";
+    try{
+      for(int j = 0; j < program.functions.size(); j++) {
+        Fun fun = program.functions.get(j);
+        int offset = 0;
+        String fileName = dirName+"/"+fun.name+".java";
+        HashMap<String, Integer> ids = new HashMap();
+        File dir = new File(dirName);
+        if (!dir.exists()) {
+            if (dir.mkdirs()) {
+                System.out.println("Diretório criado com sucesso.");
+            } else {
+                System.out.println("Falha ao criar o diretório.");
+            }
+        }
+        File javaFile = new File(fileName);
+        FileWriter javaFileWriter = new FileWriter(javaFile);
+        BufferedWriter writeBuffer = new BufferedWriter(javaFileWriter);
+        funcs.put(fun.name, fun);
+        imprimeCodigo("public class "+ fun.name + " implements Func {\n  public void code(){\n",writeBuffer);
+        for(String id: fun.identifiers) {
+           ids.put(id, offset);
+           offset = offset + 1;
+        }
+        System.out.println("Fun Ids: "+ fun.identifiers);
+        offset = 0;
+        for(int i = 0; i <fun.expressions.size(); i++){
+          Exp exp =  fun.expressions.get(i);
+          geraCodigoExp(exp, ids,offset,writeBuffer);
+        }
+        imprimeCodigo("    Secd.drop("+fun.identifiers.size()+");\n",writeBuffer);
+        imprimeCodigo("  }\n}\n",writeBuffer);
+        writeBuffer.close();
+        System.out.println("hashmap Ids: "+ ids);
+       }
+    } catch(IOException e) {
+        System.out.println(e.getMessage());
+    }
+
+
+    try{
+        String fileName = "SECD/Main.java";
+        File dir = new File("SECD");
+        if (!dir.exists()) {
+            if (dir.mkdirs()) {
+                System.out.println("Diretório criado com sucesso.");
+            } else {
+                System.out.println("Falha ao criar o diretório.");
+            }
+        }
+        File javaFile = new File(fileName);
+        FileWriter javaFileWriter = new FileWriter(javaFile);
+        BufferedWriter writeBuffer = new BufferedWriter(javaFileWriter);
+        imprimeCodigo("public class Main {\n  public static void main(String[] args) {\n",writeBuffer);
+        int offset = 0;
+        for(int i = 0; i <main.expressions.size(); i++) {
+            Exp exp =  main.expressions.get(i);
+            HashMap<String, Integer> ids = new HashMap();
+            geraCodigoExp(exp, ids, offset,writeBuffer);
+        }
+        imprimeCodigo("    Secd.printStack();\n",writeBuffer);
+        imprimeCodigo("  }\n}\n",writeBuffer);
+        writeBuffer.close();
+    } catch(IOException e) {
+        System.out.println(e.getMessage());
+    }
+  }
+
+
+  public static void geraAP(Exp exp,HashMap<String, Integer> ids, Integer offset, Integer n, BufferedWriter writeBuffer, Integer type)  {
+
+         if(exp instanceof Id){
+             Fun func = funcs.get(((Id) exp).id);
+             System.out.println("Func = "+func);
+             if(func == null){
+                 System.out.println("Id = "+((Id) exp).id);
+                 geraCodigoExp(exp,ids,offset,writeBuffer);
+                 imprimeCodigo("    Secd.call((Func) Secd.pop());\n",writeBuffer);
+             } else if(n == func.nargs){
+                 imprimeCodigo("    Secd.call(new "+func.name+"());\n",writeBuffer);
+             } else {
+                 imprimeCodigo("    Secd.pushO(new "+func.name+"());\n",writeBuffer);
+                 imprimeCodigo("    Secd.mkap("+n+");\n",writeBuffer);
+             }
+         } else if(exp instanceof Cons) {
+             Cons c = ((Cons) exp);
+             imprimeCodigo("Secd.construct(" + c.tag + "," + c.arity + ");\n",writeBuffer);
+         } else {
+             geraCodigoExp(exp,ids,offset,writeBuffer);
+             imprimeCodigo("    Secd.apply("+n+");\n",writeBuffer);
+         }
+    }
+
+  public static void geraCodigoExp(Exp exp, HashMap<String, Integer> ids, Integer offset, BufferedWriter writeBuffer){
+//      System.out.println(exp);
+      ArrayList<String> identifiers = new ArrayList<String>();
+
+              if(exp instanceof Let){
+                ids.put(((Let) exp).id,-(offset+1));
+                System.out.println("offset: " + -(offset+1));
+                geraCodigoExp(((Let) exp).exp1,ids,offset,writeBuffer);
+                geraCodigoExp(((Let) exp).exp2,ids,offset+1,writeBuffer);
+                imprimeCodigo("    Secd.drop(1);\n",writeBuffer);
+              } else if(exp instanceof If){
+                geraCodigoExp(((If) exp).exp1,ids,offset,writeBuffer);
+                imprimeCodigo("    if((Boolean) Secd.pop()){\n",writeBuffer);
+                geraCodigoExp(((If) exp).exp2,ids,offset,writeBuffer);
+                imprimeCodigo("    } else {\n",writeBuffer);
+                geraCodigoExp(((If) exp).exp3,ids,offset,writeBuffer);
+                imprimeCodigo("    }\n",writeBuffer);
+              } else if(exp instanceof Num){
+                  int num = ((Num) exp).num;
+                  imprimeCodigo("    Secd.pushO("+num+");\n",writeBuffer);
+              } else if(exp instanceof Id){
+                  System.out.println("----------------------------------------Começa IDS");
+                  String id = ((Id) exp).id;
+                  if(funcs.get(id) != null) {
+                      System.out.println(id);
+                      System.out.println(funcs.get(id));
+                      imprimeCodigo("    Secd.pushO(new "+id+"());\n",writeBuffer);
+                  } else {
+                     int actualOffset = ids.get(((Id) exp).id) + offset;
+                     System.out.println("que tem aqui? " + ((Id) exp).id+ ": "+ ids.get(((Id) exp).id));
+                     System.out.println("ID: "+((Id) exp).id + "- Offset: "+ offset +" Actual: " +actualOffset);
+                     imprimeCodigo("    Secd.push("+actualOffset+");\n",writeBuffer);
+                  }
+//                  System.out.println(((Id) exp).id);
+//                  System.out.println(ids.get(((Id) exp).id) + offset);
+                  System.out.println("----------------------------------------Finaliza IDS");
+              } else if(exp instanceof ExpressionOperator) {
+                  geraCodigoExp(((ExpressionOperator) exp).exp2,ids,offset,writeBuffer);
+                  geraCodigoExp(((ExpressionOperator) exp).exp1,ids,offset+1,writeBuffer);
+                  Operation operator = ((Operation) ((ExpressionOperator) exp).op);
+                  if(operator.op.equals("+")){
+                    imprimeCodigo("    Secd.add();\n",writeBuffer);
+                  } else if(operator.op.equals("-")){
+                    imprimeCodigo("    Secd.sub();\n",writeBuffer);
+                  } else if(operator.op.equals("*")){
+                    imprimeCodigo("    Secd.mult();\n",writeBuffer);
+                  } else if(operator.op.equals("/")){
+                    imprimeCodigo("    Secd.div();\n",writeBuffer);
+                  } else if(operator.op.equals("<")){
+                    imprimeCodigo("    Secd.menor();\n",writeBuffer);
+                  } else if(operator.op.equals(">")){
+                    imprimeCodigo("    Secd.maior();\n",writeBuffer);
+                  } else if(operator.op.equals("<=")){
+                    imprimeCodigo("    Secd.menorIgual();\n",writeBuffer);
+                  } else if(operator.op.equals(">=")){
+                    imprimeCodigo("    Secd.maiorIgual();\n",writeBuffer);
+                  } else if(operator.op.equals("==")){
+                    imprimeCodigo("    Secd.igual();\n",writeBuffer);
+                  } else if(operator.op.equals("&&")){
+                    imprimeCodigo("    Secd.and();\n",writeBuffer);
+                  } else if(operator.op.equals("||")){
+                    imprimeCodigo("    Secd.or();\n",writeBuffer);
+                  }
+              } else if(exp instanceof ExpressionSequence) {
+                Exp fExp = ((ExpressionSequence) exp);
+                int fargs = ((ExpressionSequence) exp).listaExp.size();
+                for(int i = fargs; i > 0; i--){
+                    Exp newExp = ((ExpressionSequence) exp).listaExp.get(i-1);
+                    int newOffset = offset + (fargs - i);
+                    geraCodigoExp(newExp,ids,newOffset,writeBuffer);
+                }
+                geraAP(((ExpressionSequence) exp).id,ids,offset+fargs,fargs,writeBuffer,0);
+              } else if(exp instanceof Cons) {
+                  Cons c = ((Cons) exp);
+                  imprimeCodigo("Secd.construct(" + c.tag + "," + c.arity + ");\n",writeBuffer);
+              } else if(exp instanceof  Case) {
+                  Case caso = ((Case) exp);
+                  System.out.println("exp" + caso.expression);
+                  geraCodigoExp(caso.expression,ids,offset,writeBuffer);
+                  imprimeCodigo("Construct c = ((Construct) Secd.pop());\n",writeBuffer);
+                  imprimeCodigo("switch(c.tag) {\n",writeBuffer);
+                  for(int i = 0; i < caso.cases.size(); i++ ){
+                    Num data = ((Num) caso.cases.get(i));
+                    System.out.println(caso.expressions.get(i));
+                    imprimeCodigo("    case "+data.num+":\n",writeBuffer);
+                    ArrayList<Exp> caseExpressionList = caso.caseExpressionList.get(i);
+                    System.out.println(caso.expressions.get(i));
+                    int newOffset = offset;
+                    for(int j = caseExpressionList.size(); j > 0 ; j--) {
+                        offset++;
+                        System.out.println("expressionList: "+caseExpressionList);
+                        Exp newExp = caseExpressionList.get(j-1);
+                        ids.put(((Id) newExp).id,-offset);
+//                        imprimeIds(ids);
+                        imprimeCodigo("Secd.pushO(c.stack.pop());\n",writeBuffer);
+                    }
+                    System.out.println("Expressions pos j: "+caso.expressions.get(i));
+                    geraCodigoExp(caso.expressions.get(i),ids, offset,writeBuffer);
+                    offset = newOffset;
+                    imprimeCodigo("    break;\n",writeBuffer);
+                  }
+                  imprimeCodigo("    default: \n",writeBuffer);
+                  imprimeCodigo("    break;\n",writeBuffer);
+                  imprimeCodigo("}\n",writeBuffer);
+                  imprimeCodigo("    Secd.drop(c.arity);\n",writeBuffer);
+              }
+    }
+}
+
+PARSER_END(Jfl)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+TOKEN :
+{
+  <MAIN: "main">
+| <ATRIB: "=">
+| <VIRGULA: ",">
+| <APARENTESES:"(">
+| <FPARENTESES:")">
+| <PRINT: "print">
+| <IF: "if">
+| <THEN: "then">
+| <ELSE: "else">
+| <LET: "let">
+| <IN: "in">
+| <ADD: "+">
+| <SUB: "-">
+| <MULT: "*">
+| <DIV: "/">
+| <MAIOR: ">">
+| <MENOR: "<">
+| <MAIORIGUAL: ">=">
+| <MENORIGUAL: "<=">
+| <IGUAL: "==">
+| <AND: "&&">
+| <OR: "||">
+| <CONS: "cons">
+| <CASE: "case">
+| <OF: "of">
+| <ACHAVES: "{">
+| <FCHAVES: "}">
+| <CASEATRIB: "->">
+| <BOOLTRUE: "true">
+| <BOOLFALSE: "false">
+}
+
+TOKEN :
+{
+  <NUM : (["0"-"9"])+>
+ |< ID: ["a"-"z","A"-"Z"] ( ["a"-"z","A"-"Z","0"-"9"])*>
+}
+
+// JFL -> (FUN)* MAIN 
+
+JflTree Jfl () :
+{ArrayList functions = new ArrayList<Fun>(); Main main = null; Fun func = null;}
+{
+
+  (func=Fun() {functions.add(func);})*  main=main() <EOF>
+  {return new JflTree(functions,main);}
+}
+
+/*
+
+        JFL -> (FUN)* MAIN
+        MAIN -> "main" "=" EXP
+        FUN -> ID (ID)* "=" EXP
+        EXP -> NUM  | ID  | "let" ID "=" EXP "in" EXP |
+               "if" "(" EXP ")" "then" EXP "else" EXP | "(" EXP ((OP EXP)| EXP*) ")"
+               | "cons" "("EXP,EXP")" | "case" EXP "of" "{" "<" NUM ">" "<" ID* ">" -> EXP "}"+
+        OP -> "+" | "-" | "*" | "/" | "<" | ">" | "<=" | ">=" | "==" | "&&" | "||"
+
+ */
+
+// MAIN -> "main" "=" (EXP)+
+
+Main main ():
+{Exp expression; ArrayList expressions = new ArrayList<Exp>();}
+{
+  <MAIN> <ATRIB> (expression=Exp() {expressions.add(expression);})+ 
+  {return new Main(expressions);}
+}
+
+//FUN -> ID (ID)* "=" (EXP)+
+
+Fun Fun ():
+{Token t=null; ArrayList ids = new ArrayList(); ArrayList expressions = new ArrayList<Exp>(); Token id; Exp exp;}
+{
+  (t=<ID>) (id=<ID> {ids.add(id.image);})*  <ATRIB> (exp=Exp() {expressions.add(exp);})+ ";"
+  {return new Fun(t.image,ids,expressions);}
+}
+
+/* EXP -> NUM  | ID  
+          | "let" ID "=" EXP "in" EXP 
+          | "if" "(" EXP ")" "then" EXP "else" EXP
+          | "(" EXP ((OP EXP)| EXP*) ")" 
+*/
+
+Exp Exp () :
+{Token t=null; Exp result = null; Exp exp1 =null;Exp exp2=null; Exp exp3=null; Exp exp4=null;ArrayList expressions= new ArrayList<Exp>(); Token op= null; ArrayList ids = new ArrayList(); Token id; ArrayList cases = new ArrayList(); ArrayList caseExpressionList = new ArrayList();}
+{
+(  (t=<NUM> {result = new Num(Integer.parseInt(t.image));})
+| (t=<ID> {result = new Id(t.image);})
+| <LET> (t=<ID>) <ATRIB> (exp1=Exp()) <IN> (exp2=Exp()) {result = new Let(t.image,exp1, exp2);}
+| <IF> <APARENTESES> (exp1=Exp()) <FPARENTESES> <THEN> (exp2=Exp()) <ELSE> (exp3=Exp()) {result = new If(exp1, exp2, exp3);}
+| <APARENTESES> (exp1=Exp()) ((op=Op() ) (exp2=Exp()) {result = new ExpressionOperator(exp1,new Operation(op.image),exp2);}
+| ((exp2= Exp()) {expressions.add(exp2);})* {result = new ExpressionSequence(exp1,expressions);}) <FPARENTESES>
+| (<CONS> <APARENTESES> (exp1=Exp()) <VIRGULA> (exp2=Exp()) <FPARENTESES> {result = new Cons(((Num) exp1).num,((Num) exp2).num);})
+| (<CASE> (exp1= Exp()) <OF> (<ACHAVES> <MENOR>(exp2=Exp())<MAIOR>{ ArrayList<Exp> tempExp4List = new ArrayList();} <MENOR>((exp4=Exp()) {tempExp4List.add(exp4);})*<MAIOR> <CASEATRIB> (exp3=Exp()) <FCHAVES> {cases.add(exp2); expressions.add(exp3); caseExpressionList.add(tempExp4List);})+ {result = new Case(exp1,cases,expressions,caseExpressionList);}))
+{return result;}
+}
+
+// OP -> "+" | "-" | "*" | "/" | "<" | ">" | "<=" | ">=" | "==" | "&&" | "||"
+
+Token Op () :
+{Token t = null;}
+{
+(  t=<ADD>
+| t=<SUB>
+| t=<MULT>
+| t=<DIV>
+| t=<MAIOR>
+| t=<MENOR>
+| t=<MAIORIGUAL>
+| t=<MENORIGUAL>
+| t=<IGUAL>
+| t=<AND>
+| t=<OR> )
+{return t;}
+}

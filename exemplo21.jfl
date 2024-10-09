@@ -1,0 +1,4 @@
+tupla x y = (cons (1,2) x y);
+pegaPrimeiro x = case x of
+{<1> <y z> -> y};
+main = (pegaPrimeiro (tupla 3 2))

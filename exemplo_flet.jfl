@@ -1,0 +1,1 @@
+flet x = let y = (x + x) in (y + 5);  main = (flet 7)

@@ -1,0 +1,1 @@
+const x xs = (cons (1,2) x xs); main = (const 3 5)

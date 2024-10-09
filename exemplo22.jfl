@@ -1,0 +1,4 @@
+tupla x y = (cons (1,2) x y);
+pegaSegundo x = case x of
+{<1> <x y> -> y};
+main = (pegaSegundo (tupla 1 2))

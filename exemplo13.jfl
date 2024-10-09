@@ -1,0 +1,1 @@
+main = (let x = (10 + 5) in (x+x) + let y = (10 + 10) in (y+y))

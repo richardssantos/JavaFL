@@ -1,0 +1,1 @@
+sum a b = (a + b); somax x y = (sum x y); main = (somax 3 5)

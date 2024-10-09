@@ -1,0 +1,1 @@
+Soma x y = (x + y); Inc x = ((Soma x) 1); main = (Inc 7)

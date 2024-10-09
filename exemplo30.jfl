@@ -1,0 +1,4 @@
+inc x  = (x + 1);
+fac fn n = (fn n);
+main = (fac inc 5)
+

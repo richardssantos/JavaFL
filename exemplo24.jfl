@@ -1,0 +1,8 @@
+nil = (cons (1,0)); 
+Cons x xs = (cons (2,2) x xs); 
+lista = (Cons 1 (Cons 2 (Cons 3 (nil))));
+somaLista l = case l of
+{<1> <> -> 0}
+{<2> <y ys> -> (y + (somaLista ys))};
+main = (somaLista (lista))
+

@@ -1,0 +1,1 @@
+fibonacci x = let y = if ((x <= 1)) then x else ((fibonacci (x-1)) + (fibonacci (x-2))) in y;  main = (fibonacci 7)

@@ -1,0 +1,9 @@
+True = (cons (1,0));
+False = (cons (2,0));
+and x y = case x of
+{<1> <> -> y}
+{<2> <> -> (False)};
+or w z = case w of
+{<1> <> -> (True)}
+{<2> <> -> z};
+main = (and (True) (or (True) (False)))

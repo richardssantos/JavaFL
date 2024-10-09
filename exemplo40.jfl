@@ -1,0 +1,8 @@
+nul = cons (1,0);
+Cons x y = (cons (2,2) x y);
+lista = (Cons 1 (Cons 2 (Cons 3 (Cons 4 (nul)))));
+map f l = case l of
+{<1> <> -> (nul)}
+{<2> <z zs> -> (Cons (f z) (map f zs))};
+inc w = (w + 1);
+main = (map inc (lista))

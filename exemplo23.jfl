@@ -1,0 +1,4 @@
+tupla x y = (cons (1,2) x y);
+somaTupla t = case t of
+{<1> <x y> -> (x + y)};
+main = (somaTupla (tupla 1 2))
