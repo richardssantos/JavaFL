@@ -42,3 +42,5 @@ Para executar o programa na máquina SECD, use o comando:
 Exemplos
 Você encontrará vários exemplos prontos na pasta. Para rodar um exemplo específico, siga os mesmos passos acima substituindo nome_arquivo.jfl pelo nome do arquivo de exemplo desejado.
 
+Gramática e Expressões regulares podem ser encontradas aqui:
+https://github.com/richardssantos/JavaFL/blob/main/Gram%C3%A1tica%20e%20Express%C3%B5es%20Regulares.txt
