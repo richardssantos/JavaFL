@@ -41,3 +41,66 @@ Para executar o programa na máquina SECD, use o comando:
   
 Exemplos
 Você encontrará vários exemplos prontos na pasta. Para rodar um exemplo específico, siga os mesmos passos acima substituindo nome_arquivo.jfl pelo nome do arquivo de exemplo desejado.
+
+
+------------- Gramática e Expressões regulares da Linguagem -----------------
+ 
+Gramática:
+  
+  JFL -> (FUN)* MAIN
+  MAIN -> "main" "=" EXP
+  FUN -> ID (ID)* "=" EXP
+  EXP -> NUM  | ID  | "let" ID "=" EXP "in" EXP |
+         "if" "(" EXP ")" "then" EXP "else" EXP | "(" EXP ((OP EXP)| EXP*) ")"
+        | "cons" "("EXP,EXP")" | "case" EXP "of" "{" "<" NUM ">" "<" ID* ">" -> EXP "}"+
+  OP -> "+" | "-" | "*" | "/" | "<" | ">" | "<=" | ">=" | "==" | "&&" | "||"
+
+Expressões regulares:   
+
+  SKIP :
+  {
+    " "
+  | "\t"
+  | "\n"
+  | "\r"
+  }
+  
+  TOKEN :
+  {
+    <MAIN: "main">
+  | <ATRIB: "=">
+  | <VIRGULA: ",">
+  | <APARENTESES:"(">
+  | <FPARENTESES:")">
+  | <PRINT: "print">
+  | <IF: "if">
+  | <THEN: "then">
+  | <ELSE: "else">
+  | <LET: "let">
+  | <IN: "in">
+  | <ADD: "+">
+  | <SUB: "-">
+  | <MULT: "*">
+  | <DIV: "/">
+  | <MAIOR: ">">
+  | <MENOR: "<">
+  | <MAIORIGUAL: ">=">
+  | <MENORIGUAL: "<=">
+  | <IGUAL: "==">
+  | <AND: "&&">
+  | <OR: "||">
+  | <CONS: "cons">
+  | <CASE: "case">
+  | <OF: "of">
+  | <ACHAVES: "{">
+  | <FCHAVES: "}">
+  | <CASEATRIB: "->">
+  | <BOOLTRUE: "true">
+  | <BOOLFALSE: "false">
+  }
+  
+  TOKEN :
+  {
+    <NUM : (["0"-"9"])+>
+   |< ID: ["a"-"z","A"-"Z"] ( ["a"-"z","A"-"Z","0"-"9"])*>
+  }
