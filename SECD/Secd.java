@@ -3,7 +3,6 @@ import java.util.ArrayDeque;
 public class Secd {
 
     private static Deque<Object> stack = new ArrayDeque<>();
-
     //coloca o objeto no topo da pilha
     public static void pushO(Object obj) {
         stack.push(obj);
@@ -167,10 +166,36 @@ public class Secd {
         }
     }
 
+    public static void printCons(Construct item, Deque<Object> elements){
+        for(Object it: ((Construct) item).stack){
+            if(it instanceof Construct){
+                printCons(((Construct) it),elements);
+            } else {
+                elements.addLast(it);
+            }
+        }
+    }
+
     public static void printStack() {
         System.out.println("-------------------------------");
+        StringBuilder result = new StringBuilder();
+        Deque<Object> elements = new ArrayDeque<>();
+
         for(Object item: stack){
-            System.out.println(item);
+            if(item instanceof Construct){
+                result.append("[");
+                printCons((Construct) item,elements);
+                while (!elements.isEmpty()) {
+                    result.append(elements.removeLast());
+                    if (!elements.isEmpty()) {
+                        result.append(",");
+                    }
+                }
+                result.append("]");
+                System.out.println(result.toString());
+            } else {
+                System.out.println(item);
+            }
         }
     }
 
